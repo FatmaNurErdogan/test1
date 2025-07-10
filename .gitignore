@@ -1,0 +1,66 @@
+## Build output
+bin/
+obj/
+
+## User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+## VS Code
+.vscode/
+
+## Visual Studio
+.vs/
+*.dbmdl
+*.bak
+
+## Dotnet artifacts
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+## Others
+*.log
+*.tlog
+*.cache
+*.pdb
+
+## Temporary files
+~$*
+*.tmp
+*.temp
+*.DS_Store
+
+## Package managers
+node_modules/
+bower_components/
+packages/
+*.nupkg
+*.snupkg
+
+## Environment files
+.env
+
+## OS files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+## Rider
+.idea/
+
+## JetBrains
+*.sln.iml
+
+## macOS
+.DS_Store
+
+## Windows
+*.lnk
