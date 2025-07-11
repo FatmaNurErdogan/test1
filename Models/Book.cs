@@ -6,6 +6,7 @@ namespace test1.Models
     [Table("Book")]
     public class Book
     {
+
         [Key]
         [Column("Book ID")]
         public int BookID { get; set; }

@@ -1,0 +1,3 @@
+2025-07-11 08:17:08.706 +03:00 [INF] Adding a new book with ID 16
+2025-07-11 08:17:10.929 +03:00 [INF] Book with ID test1.Models.Book successfully added.
+2025-07-11 08:17:45.058 +03:00 [INF] Fetchinhg all books from the database
