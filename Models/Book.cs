@@ -6,7 +6,6 @@ namespace test1.Models
     [Table("Book")]
     public class Book
     {
-
         [Key]
         [Column("Book ID")]
         public int BookID { get; set; }
@@ -14,8 +13,11 @@ namespace test1.Models
         [Column("book name")]
         public string BookName { get; set; }
 
-        [Column("author")]
-        public string Author { get; set; }
+        [Column("AuthorID")] 
+        public int AuthorID { get; set; }
+
+        [ForeignKey("AuthorID")]
+        public Author Author { get; set; }
 
         [Column("publisher")]
         public string Publisher { get; set; }

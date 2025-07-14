@@ -1,52 +1,58 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using test1.Models;
-using test1.Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;     
+using Microsoft.Extensions.Logging;
+using test1.Data;
+using test1.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace test1.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class BookController : ControllerBase
     {
-        private readonly AppDbContext context;  // Dependency injection. It allows us to inject dependencies from the outside, instead of having classes create them internally.
-        private readonly ILogger<BookController> _logger; // _ private field parametre olan logger_logger  ın fieldına atanır
+        private readonly AppDbContext context;
+        private readonly ILogger<BookController> _logger;
+
         public BookController(AppDbContext context, ILogger<BookController> logger)
         {
             this.context = context;
             _logger = logger;
         }
+
         [HttpGet]
         public IActionResult GetAllBooks()
         {
-            var books = context.Books.ToList();
-            _logger.LogInformation("Fetchinhg all books from the database");
+            var books = context.Books.Include(b => b.Author).ToList();
+            _logger.LogInformation("Fetching all books from the database");
             return Ok(books);
         }
-        [HttpGet]
-        [Route("{bookID:int}")]
+
+        [HttpGet("{bookID:int}")]
         public IActionResult GetBookByID(int bookID)
         {
-            _logger.LogInformation("Fetching book with ID {BookID} " , bookID);
-            var book = context.Books.Find(bookID);
+            _logger.LogInformation("Fetching book with ID {BookID}", bookID);
+            var book = context.Books.Include(b => b.Author).FirstOrDefault(b => b.BookID == bookID);
+
             if (book == null)
             {
                 _logger.LogInformation("Book with ID {bookID} not found.", bookID);
-                return NotFound("Bokk not found");
+                return NotFound("Book not found");
             }
+
             return Ok(book);
         }
 
         [HttpPost]
         public IActionResult AddBook(AddBookDto addBookDto)
         {
-            _logger.LogInformation("Adding a new book with ID {BookID}" , addBookDto.BookID);
+            _logger.LogInformation("Adding a new book with ID {BookID}", addBookDto.BookID);
             var bookEntity = new Book()
             {
                 BookID = addBookDto.BookID,
                 BookName = addBookDto.BookName,
-                Author = addBookDto.Author,
+                AuthorID = addBookDto.AuthorID,
                 Publisher = addBookDto.Publisher,
                 Type = addBookDto.Type,
                 Stok = addBookDto.Stok
@@ -54,12 +60,12 @@ namespace test1.Controllers
 
             context.Books.Add(bookEntity);
             context.SaveChanges();
-            _logger.LogInformation("Book with ID {bookEntity.BookID} successfully added.", bookEntity );
+            _logger.LogInformation("Book with ID {BookID} successfully added.", addBookDto.BookID);
             return Ok(bookEntity);
         }
-        [HttpPut]
-        [Route("{BookID:int}")]
-        public IActionResult UpadateBook(int BookID, UpdateBookDto updateBookDto)
+
+        [HttpPut("{BookID:int}")]
+        public IActionResult UpdateBook(int BookID, UpdateBookDto updateBookDto)
         {
             _logger.LogInformation($"Updating book with ID {BookID}.");
             var book = context.Books.Find(BookID);
@@ -67,17 +73,19 @@ namespace test1.Controllers
             {
                 return NotFound();
             }
+
             book.BookName = updateBookDto.BookName;
-            book.Author = updateBookDto.Author;
+            book.AuthorID = updateBookDto.AuthorID;
             book.Publisher = updateBookDto.Publisher;
             book.Type = updateBookDto.Type;
             book.Stok = updateBookDto.Stok;
+
             context.SaveChanges();
             _logger.LogInformation($"Book with ID {BookID} successfully updated.");
-            return Ok(book + "has been succesfully updated.");
+            return Ok(book + " has been successfully updated.");
         }
-        [HttpDelete]
-        [Route("{BookID:int}")]
+
+        [HttpDelete("{BookID:int}")]
         public IActionResult DeleteBook(int BookID)
         {
             _logger.LogInformation($"Trying to delete book with ID {BookID}.");
@@ -87,12 +95,12 @@ namespace test1.Controllers
                 _logger.LogInformation($"Book with ID {BookID} not found.");
                 return NotFound("Book not found");
             }
+
             context.Books.Remove(book);
             context.SaveChanges();
             _logger.LogInformation($"Book with ID {BookID} successfully deleted.");
-            return Ok("Book has been succesfully removed.");
-            
+            return Ok("Book has been successfully removed.");
         }
-
     }
 }
+

@@ -20,26 +20,23 @@ namespace test1.Controllers
         }
 
         [HttpPost("login")]
-        public IActionResult Login(UserLogin login)
+        public IActionResult Login(UserLoginDto login)
         {
-            
-            var user = _context.Users.FirstOrDefault(u => u.email == login.UserName && u.password == login.Password);
+            // Kullanıcı adı ve şifre ile giriş kontrolü
+            var user = _context.Users.FirstOrDefault(u => u.userName == login.UserName && u.password == login.Password);
             if (user == null)
             {
-                return Unauthorized("Geçersiz kullanıcı bilgileri.");
+                return Unauthorized("Geçersiz kullanıcı adı veya şifre.");
             }
 
-        
+            // Token claim'leri
             var claims = new[]
             {
-                new Claim("UserID", user.userID.ToString()), // Claimin içindekiler.NET kütüphanesinde string olarak tanımlı .
-                new Claim("Email", user.email)
+                new Claim("UserID", user.userID.ToString()),
+                new Claim("UserName", user.userName)
             };
 
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("fjelkjfj3u49209jfeh"));
-
-            // encoding.UTF8.GetBytes  stringi byte a çevirir , symmetricSecurityKey byte alır.
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("supersecretkeyforyourjwt256bitlength!!"));
 
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 

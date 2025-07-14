@@ -2,12 +2,10 @@
 using Serilog;
 using Serilog.Events;
 using test1.Data;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-
-
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,13 +22,20 @@ Log.Logger = new LoggerConfiguration()
         logEvent.Level == LogEventLevel.Error)
     .CreateLogger();
 
-// Serilog’u kullan
 builder.Host.UseSerilog();
 
-// Add services
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// CORS - Vue.js için
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowVueApp", policy =>
+    {
+        policy.WithOrigins("http://localhost:8080")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
+// JWT Authentication
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -38,9 +43,9 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
-    options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidateIssuer = true,         // JWT Token creates digital signature.
+        ValidateIssuer = true,
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
@@ -50,18 +55,59 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+// Swagger + JWT Auth tanımı
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "test1 API", Version = "v1" });
+
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "JWT tokenınızı giriniz. Örnek: Bearer eyJhbGciOiJIUzI1NiIsInR..."
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+});
+
+// EF Core bağlamı
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+
 var app = builder.Build();
 
-// Swagger (Sadece development'ta)
+// Swagger yalnızca geliştirme ortamında aktif
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
+// Middleware sıralaması
 app.UseHttpsRedirection();
+app.UseCors("AllowVueApp");
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapControllers();
+
 app.Run();
